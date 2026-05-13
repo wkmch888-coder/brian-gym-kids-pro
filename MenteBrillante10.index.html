@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mente Brillante - Brain Gym Kids</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fredoka+One&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #ec4899;
+            --accent: #f59e0b;
+            --success: #10b981;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            user-select: none;
+            overscroll-behavior-y: contain;
+        }
+        .font-kids { font-family: 'Fredoka One', cursive; }
+        
+        /* Animaciones */
+        @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .animate-bounce-slow { animation: bounce-slow 3s ease-in-out infinite; }
+        
+        .progress-ring { transition: stroke-dashoffset 0.5s ease; transform: rotate(-90deg); transform-origin: 50% 50%; }
+        
+        .card-tap:active { transform: scale(0.95); transition: 0.1s; }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Estilos de Categoría */
+        .cat-1 { background: linear-gradient(135deg, #6366f1, #818cf8); } /* Línea Media */
+        .cat-2 { background: linear-gradient(135deg, #f59e0b, #fbbf24); } /* Energía */
+        .cat-3 { background: linear-gradient(135deg, #ec4899, #f472b6); } /* Manos */
+        .cat-4 { background: linear-gradient(135deg, #10b981, #34d399); } /* Equilibrio */
+        .cat-5 { background: linear-gradient(135deg, #8b5cf6, #a78bfa); } /* Visual */
+        .cat-6 { background: linear-gradient(135deg, #06b6d4, #22d3ee); } /* Mix */
+
+        .modal-overlay { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div id="app" class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative overflow-hidden flex flex-col">
+        
+        <!-- App Header -->
+        <header class="p-6 pb-2 sticky top-0 bg-white/80 backdrop-blur-md z-30 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-kids text-indigo-600">Mente Brillante</h1>
+                <p id="app-subtitle" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Gimnasia Cerebral</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="viewSettings()" class="p-2 bg-slate-100 rounded-full text-slate-500 card-tap">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <div class="relative w-12 h-12">
+                    <svg class="w-12 h-12">
+                        <circle class="text-slate-100" stroke-width="4" stroke="currentColor" fill="transparent" r="20" cx="24" cy="24"/>
+                        <circle id="header-progress-ring" class="text-indigo-500 progress-ring" stroke-width="4" stroke-dasharray="125.6" stroke-dashoffset="125.6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="20" cx="24" cy="24"/>
+                    </svg>
+                    <div id="header-progress-text" class="absolute inset-0 flex items-center justify-center text-[9px] font-black">0%</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Container -->
+        <main id="main-view" class="flex-1 overflow-y-auto p-6 pt-2 pb-28 no-scrollbar">
+            <!-- Dinámico -->
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white/90 backdrop-blur-lg border border-slate-100 rounded-3xl shadow-xl p-2 flex justify-between items-center z-40">
+            <button onclick="viewHome()" class="nav-btn flex flex-col items-center gap-1 flex-1 py-2 text-indigo-600 transition-all" id="nav-home">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span class="text-[9px] font-black uppercase">Hoy</span>
+            </button>
+            <button onclick="viewLibrary()" class="nav-btn flex flex-col items-center gap-1 flex-1 py-2 text-slate-400 transition-all" id="nav-lib">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15a2.5 2.5 0 0 1 2.5-2.5Z"/></svg>
+                <span class="text-[9px] font-black uppercase">Retos</span>
+            </button>
+            <button onclick="viewStats()" class="nav-btn flex flex-col items-center gap-1 flex-1 py-2 text-slate-400 transition-all" id="nav-stats">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v6"/><rect width="8" height="12" x="2" y="8" rx="2"/><path d="M15 20v-a2 2 0 0 1 2-2h6"/><rect width="8" height="16" x="14" y="4" rx="2"/></svg>
+                <span class="text-[9px] font-black uppercase">Logros</span>
+            </button>
+        </nav>
+
+        <!-- Exercise Modal -->
+        <div id="exercise-modal" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-6">
+            <div class="modal-overlay absolute inset-0" onclick="closeModal()"></div>
+            <div class="bg-white w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 relative animate-slide-up z-10">
+                <button onclick="closeModal()" class="absolute top-6 right-6 bg-slate-100 p-2 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+                <div id="modal-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const EXERCISES = [
+            // Categoría 1: Movimientos de Línea Media (1-10)
+            { id: 1, cat: 1, title: "Gateo Cruzado", desc: "Toca la rodilla derecha con la mano izquierda y la rodilla izquierda con la mano derecha. ¡Como si marcharas!", detail: "Coordina tus movimientos alternando brazos y piernas rítmicamente.", effect: "Integración hemisférica y coordinación.", icon: "🏃‍♂️" },
+            { id: 2, cat: 1, title: "El Ocho Perezoso", desc: "Dibuja un 8 acostado (∞) en el aire con tu dedo índice. Sigue el dedo con tus ojos.", detail: "Mantén la cabeza quieta y mueve solo los ojos siguiendo tu dedo.", effect: "Mejora la lectura y la coordinación visual.", icon: "♾️" },
+            { id: 3, cat: 1, title: "El Elefante", desc: "Pega tu oreja al hombro y estira el brazo. Dibuja ochos grandes en el aire.", detail: "Balancea todo tu cuerpo mientras dibujas con el brazo extendido.", effect: "Libera tensión en el cuello y mejora la atención.", icon: "🐘" },
+            { id: 4, cat: 1, title: "Doble Garabateo", desc: "Usa ambas manos para dibujar círculos o formas al mismo tiempo de forma simétrica.", detail: "Imagina que eres un espejo: lo que hace una mano lo repite la otra.", effect: "Estimula la escritura y visión espacial.", icon: "🎨" },
+            { id: 5, cat: 1, title: "Círculos con el Cuello", desc: "Rota la cabeza suavemente haciendo círculos lentos como un búho sabio.", detail: "Haz movimientos muy lentos para no marearte, respirando profundo.", effect: "Relajación y oxigenación cerebral.", icon: "🦉" },
+            { id: 6, cat: 1, title: "Cruce de Pies", desc: "Camina cruzando un pie por delante del otro siguiendo una línea recta.", detail: "Pon atención a tu equilibrio en cada paso cruzado.", effect: "Conexión motriz y equilibrio dinámico.", icon: "👣" },
+            { id: 7, cat: 1, title: "Molino de Viento", desc: "Gira tus brazos en sentidos opuestos: uno hacia adelante y otro hacia atrás.", detail: "¡Es un truco de magia! Intenta que no choquen tus manos.", effect: "Desafío de coordinación superior.", icon: "🎡" },
+            { id: 8, cat: 1, title: "Tocar Talones", desc: "Por detrás de tu espalda, intenta tocar el talón derecho con tu mano izquierda.", detail: "Alterna manos y pies. ¿Puedes hacerlo saltando?", effect: "Conciencia corporal y agilidad.", icon: "👟" },
+            { id: 9, cat: 1, title: "Limpiaparabrisas", desc: "Mueve ambos brazos de izquierda a derecha rítmicamente frente a ti.", detail: "Mantén los brazos estirados y el torso firme.", effect: "Integración rítmica lateral.", icon: "🚿" },
+            { id: 10, cat: 1, title: "El Espantapájaros", desc: "Brazos en 90°, baja uno mientras el otro sube. ¡No dejes que se toquen!", detail: "Como una marioneta con hilos invisibles.", effect: "Independencia de extremidades.", icon: "🪵" },
+
+            // Categoría 2: Estiramientos (11-20)
+            { id: 11, cat: 2, title: "La Lechuza", desc: "Mano en el hombro contrario y gira la cabeza lentamente hacia ese lado.", detail: "Aprieta suavemente el hombro mientras giras y exhalas.", effect: "Reduce estrés por estudio prolongado.", icon: "🦉" },
+            { id: 12, cat: 2, title: "Activación del Brazo", desc: "Estira un brazo hacia arriba y sostén con la otra mano haciendo presión.", detail: "Siente como tus músculos se despiertan y se llenan de fuerza.", effect: "Prepara la musculatura para escribir.", icon: "💪" },
+            { id: 13, cat: 2, title: "Bombeo de Pantorrilla", desc: "Apóyate en una silla, estira una pierna atrás y apoya el talón.", detail: "Inclínate hacia adelante manteniendo el talón en el suelo.", effect: "Mejora circulación y alerta mental.", icon: "🦶" },
+            { id: 14, cat: 2, title: "El Grito Sordo", desc: "Abre la boca gigante como si gritaras ¡AHHH! pero sin sonido.", detail: "Estira todos los músculos de tu cara al máximo.", effect: "Libera tensión en la mandíbula.", icon: "😮" },
+            { id: 15, cat: 2, title: "Rotación de Tobillo", desc: "Haz círculos lentos con tus pies mientras estás sentado.", detail: "Intenta escribir tu nombre en el aire usando tus dedos del pie.", effect: "Relajación y conexión tierra.", icon: "🔄" },
+            { id: 16, cat: 2, title: "Estiramiento Gravedad", desc: "Sentado, cruza las piernas y deja caer tu cuerpo hacia adelante.", detail: "Suelta los brazos y deja que la cabeza cuelgue relajada.", effect: "Relaja la columna y el sistema nervioso.", icon: "🧘" },
+            { id: 17, cat: 2, title: "Balanceo de Pelvis", desc: "Haz pequeños círculos con tu cadera, como si tuvieras un aro.", detail: "Mantén los pies pegados al suelo mientras te mueves.", effect: "Centrado corporal y fluidez.", icon: "⭕" },
+            { id: 18, cat: 2, title: "Bostezo Energético", desc: "Masajea tu mandíbula mientras haces un bostezo gigante.", detail: "Busca el punto donde se unen tus dientes y presiona suave.", effect: "Aumenta la oxigenación cerebral.", icon: "🥱" },
+            { id: 19, cat: 2, title: "Puntos del Cerebro", desc: "Toca debajo de tu clavícula con una mano y el ombligo con la otra.", detail: "Masajea suavemente mientras miras de izquierda a derecha.", effect: "Claridad mental inmediata.", icon: "🧠" },
+            { id: 20, cat: 2, title: "Puntos de Tierra", desc: "Toca tu labio inferior y tu ombligo al mismo tiempo con dos dedos.", detail: "Respira hondo y siente como tus pies se agarran al suelo.", effect: "Ayuda a enfocarse en el presente.", icon: "🌍" },
+
+            // Categoría 3: Dedos (21-30)
+            { id: 21, cat: 3, title: "Escalera de Dedos", desc: "Toca tu pulgar con cada dedo de la mano en secuencia rápida.", detail: "Empieza por el índice y llega al meñique, luego regresa.", effect: "Motricidad fina esencial para escribir.", icon: "🖐️" },
+            { id: 22, cat: 3, title: "Dedos en V", desc: "Separa tus dedos formando una 'V' y luego júntalos.", detail: "¡Larga vida y prosperidad! Intenta hacerlo con ambas manos.", effect: "Agilidad y fuerza manual.", icon: "🖖" },
+            { id: 23, cat: 3, title: "El Gancho de Cook", desc: "Cruza pies y brazos, entrelaza manos y llévalas al pecho.", detail: "Cierra los ojos y respira 3 veces profundamente.", effect: "Calma el sistema emocional.", icon: "⚓" },
+            { id: 24, cat: 3, title: "Círculos de Pulgares", desc: "Rota tus pulgares uno alrededor del otro sin que se toquen.", detail: "Imagina que son dos planetas orbitando.", effect: "Concentración puntual.", icon: "👍" },
+            { id: 25, cat: 3, title: "Pistola y OK", desc: "Una mano hace 'OK' y la otra una 'L'. ¡Cambia rápido!", detail: "Es un reto de velocidad mental. ¡No te rindas!", effect: "Flexibilidad cognitiva.", icon: "👌" },
+            { id: 26, cat: 3, title: "Piedra, Papel, Tijera", desc: "Juega contra ti mismo: la mano derecha debe ganarle a la izquierda.", detail: "Toma decisiones rápidas con ambas manos por separado.", effect: "Independencia de hemisferios.", icon: "✂️" },
+            { id: 27, cat: 3, title: "Araña subiendo", desc: "Une pulgar e índice de manos opuestas y rota hacia arriba.", detail: "Como la canción: La arañita subió por el balcón.", effect: "Coordinación ojo-mano compleja.", icon: "🕷️" },
+            { id: 28, cat: 3, title: "Escondite de Dedos", desc: "Esconde el pulgar dentro del puño y sácalo al contar tres.", detail: "Hazlo rítmicamente con una canción que te guste.", effect: "Velocidad de reacción motora.", icon: "🙈" },
+            { id: 29, cat: 3, title: "Teclado Invisible", desc: "Mueve los dedos como si tocaras un piano a toda velocidad.", detail: "Mueve cada dedo de forma independiente sobre la mesa.", effect: "Estimula la corteza motora.", icon: "🎹" },
+            { id: 30, cat: 3, title: "El Telescopio", desc: "Mira a través de círculos hechos con tus dedos, alternando ojos.", detail: "Enfoca objetos lejanos a través de tus 'lentes'.", effect: "Convergencia y enfoque visual.", icon: "🔭" },
+
+            // Categoría 4: Equilibrio (31-40)
+            { id: 31, cat: 4, title: "La Cigüeña", desc: "Mantente en un solo pie durante 10 segundos sin moverte.", detail: "Mira un punto fijo al frente para no caerte.", effect: "Estabilidad y calma mental.", icon: "🦢" },
+            { id: 32, cat: 4, title: "Cuerda Floja", desc: "Camina poniendo un pie justo frente al otro sobre una línea.", detail: "Brazo extendidos para ayudarte a equilibrar.", effect: "Precisión de movimiento.", icon: "🧵" },
+            { id: 33, cat: 4, title: "El Avión", desc: "Equilibrio en un pie, brazos abiertos y cuerpo hacia adelante.", detail: "¡Cuidado con las turbulencias! Mantén la pierna atrás estirada.", effect: "Control postural total.", icon: "✈️" },
+            { id: 34, cat: 4, title: "Respiración Abdominal", desc: "Infla tu barriga como un globo al tomar aire por la nariz.", detail: "Pon tu mano en el ombligo para sentir como sube y baja.", effect: "Regulación emocional y calma.", icon: "🎈" },
+            { id: 35, cat: 4, title: "Puntos del Espacio", desc: "Toca el labio superior y el final de tu espalda a la vez.", detail: "Mira hacia arriba mientras mantienes el contacto.", effect: "Orientación espacial.", icon: "🌌" },
+            { id: 36, cat: 4, title: "La Palmera", desc: "Estira tus brazos al cielo y ponte de puntillas lo más alto.", detail: "Imagina que el viento te mueve suavemente de lado a lado.", effect: "Alargamiento y energía.", icon: "🌴" },
+            { id: 37, cat: 4, title: "El Árbol", desc: "Apoya un pie en tu pierna contraria y junta manos en el pecho.", detail: "Siente como tus raíces crecen hacia el suelo.", effect: "Enfoque y serenidad.", icon: "🌳" },
+            { id: 38, cat: 4, title: "Caminar hacia atrás", desc: "Da 10 pasos hacia atrás con mucho cuidado.", detail: "Siente el suelo con tus talones antes de apoyar todo el pie.", effect: "Confianza y propiocepción.", icon: "🔙" },
+            { id: 39, cat: 4, title: "Equilibrio de Libro", desc: "Camina con un libro en la cabeza sin que se caiga.", detail: "Espalda recta y mirada orgullosa hacia el frente.", effect: "Postura y atención sostenida.", icon: "📚" },
+            { id: 40, cat: 4, title: "La Estatua", desc: "Baila y quédate congelado cuando la música pare.", detail: "Intenta mantener la pose más graciosa que puedas.", effect: "Inhibición de respuesta e impulsos.", icon: "🗿" },
+
+            // Categoría 5: Retos Visuales (41-50)
+            { id: 41, cat: 5, title: "Seguimiento Visual", desc: "Sigue un objeto que se mueve solo con los ojos, sin mover la cabeza.", detail: "Pide a alguien que mueva un lápiz frente a ti lentamente.", effect: "Lectura eficiente y fluida.", icon: "👁️" },
+            { id: 42, cat: 5, title: "Parpadeo Rápido", desc: "Parpadea 10 veces muy rápido para descansar tus ojos.", detail: "Cierra fuerte y abre grande después de parpadear.", effect: "Lubricación y frescura mental.", icon: "✨" },
+            { id: 43, cat: 5, title: "Cerca y Lejos", desc: "Mira tu dedo muy cerca y luego mira algo muy lejos.", detail: "Cambia el enfoque rápido 5 veces seguidas.", effect: "Acomodación visual y enfoque.", icon: "🔭" },
+            { id: 44, cat: 5, title: "Escritura al Aire", desc: "Escribe tu nombre en el aire con la mano que casi no usas.", detail: "Usa movimientos grandes, como si pintaras una nube.", effect: "Neuroplasticidad y lateralidad.", icon: "✍️" },
+            { id: 45, cat: 5, title: "Dibujo de Espejo", desc: "Dibuja un círculo con la derecha y un cuadrado con la izquierda.", detail: "¡Concentración máxima! Tus manos quieren hacer lo mismo.", effect: "Desafío máximo de hemisferios.", icon: "🪞" },
+            { id: 46, cat: 5, title: "Lectura de Colores", desc: "Di el color de una palabra, ¡No leas lo que dice!", detail: "Si ves la palabra 'ROJO' escrita en azul, debes decir 'Azul'.", effect: "Velocidad de procesamiento.", icon: "🌈" },
+            { id: 47, cat: 5, title: "Mapa Mental", desc: "Cierra los ojos e imagina el camino de tu cama a la cocina.", detail: "Visualiza cada puerta y mueble en tu camino imaginario.", effect: "Memoria de trabajo espacial.", icon: "🗺️" },
+            { id: 48, cat: 5, title: "Caza de Letras", desc: "Busca todas las letras 'A' en un texto cercano.", detail: "Usa tu dedo como escáner para encontrarlas rápido.", effect: "Rastreo visual y discriminación.", icon: "🔍" },
+            { id: 49, cat: 5, title: "Diferencias", desc: "Busca 3 cosas diferentes entre dos objetos parecidos.", detail: "Observa texturas, colores y tamaños mínimos.", effect: "Atención al detalle.", icon: "↔️" },
+            { id: 50, cat: 5, title: "Sopa de Letras", desc: "Imagina una palabra y búscala en una página llena de letras.", detail: "Busca en horizontal, vertical y hasta diagonal.", effect: "Estrategia de búsqueda visual.", icon: "🍜" },
+
+            // Categoría 6: Mix (51-80) - Resumidos por espacio pero completos
+            { id: 51, cat: 6, title: "Orejas de Conejo", desc: "Mueve índice y medio rítmicamente.", detail: "Arriba y abajo, como un conejo comiendo zanahoria.", effect: "Coordinación rítmica.", icon: "🐰" },
+            { id: 52, cat: 6, title: "Sombrero Pensador", desc: "Masajea tus orejas de adentro hacia afuera.", detail: "Como si desenrollaras el borde de tu oreja suavemente.", effect: "Escucha atenta y memoria.", icon: "🎩" },
+            { id: 53, cat: 6, title: "Garra de Gato", desc: "Abre y cierra las manos con mucha fuerza.", detail: "Saca las garras y luego esconde las patitas.", effect: "Fuerza y agarre manual.", icon: "🐾" },
+            { id: 54, cat: 6, title: "El Periscopio", desc: "Gira el tronco de un lado a otro sin mover los pies.", detail: "Mira todo a tu alrededor como un submarino.", effect: "Flexibilidad de columna.", icon: "🚢" },
+            { id: 55, cat: 6, title: "Palmas rítmicas", desc: "Sigue una secuencia compleja de aplausos.", detail: "Mesa, palma, pecho, palma. ¡Repite!", effect: "Memoria secuencial.", icon: "👏" },
+            { id: 56, cat: 6, title: "Nariz-Oreja", desc: "Mano a nariz, otra a oreja. ¡Cambia!", detail: "Cruza los brazos frente a tu cara para llegar.", effect: "Integración sensorial.", icon: "👃" },
+            { id: 57, cat: 6, title: "Abecedario Corporal", desc: "Forma letras usando todo tu cuerpo.", detail: "Haz una 'L' con tus piernas o una 'O' con tus brazos.", effect: "Conciencia corporal global.", icon: "🔤" },
+            { id: 58, cat: 6, title: "Respiración Alternada", desc: "Tapa una fosa nasal, inhala, cambia y exhala.", detail: "Usa tu pulgar para tapar suavemente.", effect: "Equilibrio energético.", icon: "🌬️" },
+            { id: 59, cat: 6, title: "Círculos de Rodilla", desc: "Manos en rodillas y haz giros suaves.", detail: "Junta los pies y gira hacia la derecha e izquierda.", effect: "Articulaciones sanas.", icon: "🦵" },
+            { id: 60, cat: 6, title: "El Nudo", desc: "Enreda brazos y trata de desenredarlos sin soltar.", detail: "¡Es un puzzle humano! Pide ayuda si te atascas.", effect: "Resolución de problemas.", icon: "🥨" },
+            { id: 61, cat: 6, title: "Salto de Tijera", desc: "Salta abriendo piernas y manos coordinadamente.", detail: "Abre al saltar, cierra al caer.", effect: "Coordinación cardiovascular.", icon: "✂️" },
+            { id: 62, cat: 6, title: "Patear el aire", desc: "Acostado, pedalea o patea cruzando piernas.", detail: "Mantén la espalda pegada al suelo.", effect: "Fortalecimiento de core.", icon: "🦵" },
+            { id: 63, cat: 6, title: "El Pintor", desc: "Pinta una pared imaginaria con ambas manos.", detail: "Usa brocha gorda y movimientos circulares.", effect: "Amplitud de movimiento.", icon: "🖌️" },
+            { id: 64, cat: 6, title: "Zapateo rítmico", desc: "Crea un código de sonidos con tus pies.", detail: "Tac, tac, tiquitac. ¿Puedes repetirlo?", icon: "👞" },
+            { id: 65, cat: 6, title: "Lanzamiento", desc: "Simula lanzar una pelota con la mano débil.", detail: "Apunta a un blanco imaginario con cuidado.", effect: "Precisión hemisferio no dominante.", icon: "🎾" },
+            { id: 66, cat: 6, title: "La Cobra", desc: "Acuéstate y levanta el pecho mirando al cielo.", detail: "Como una serpiente despertando por la mañana.", effect: "Apertura torácica.", icon: "🐍" },
+            { id: 67, cat: 6, title: "Puntos de Equilibrio", desc: "Toca detrás de la oreja y el ombligo.", detail: "Mantén el equilibrio mientras presionas.", effect: "Alineación vestibular.", icon: "⚖️" },
+            { id: 68, cat: 6, title: "Masaje de sienes", desc: "Círculos suaves en las sienes con los dedos.", detail: "Cierra los ojos y relaja la frente.", effect: "Alivio de fatiga visual.", icon: "💆" },
+            { id: 69, cat: 6, title: "La Pinza", desc: "Usa dedos de los pies para recoger algo.", detail: "Intenta llevar un calcetín de un lado a otro.", effect: "Conexión nerviosa distal.", icon: "📍" },
+            { id: 70, cat: 6, title: "Talones", desc: "Camina apoyado solo en tus talones.", detail: "Puntitas de los pies hacia arriba.", effect: "Fortalecimiento de tobillos.", icon: "👠" },
+            { id: 71, cat: 6, title: "El Péndulo", desc: "Brazos cuelgan y se balancean como reloj.", detail: "Suelta los hombros completamente.", effect: "Relajación de tensión.", icon: "⏰" },
+            { id: 72, cat: 6, title: "Soplo de Vela", desc: "Inhala profundo y sopla muy lento.", detail: "No apagues la vela, solo mueve la llama.", effect: "Control de exhalación.", icon: "🕯️" },
+            { id: 73, cat: 6, title: "Contar de reversa", desc: "Cuenta 20 al 1 mientras caminas.", detail: "Si te equivocas, vuelve a empezar.", effect: "Multitarea mental-motora.", icon: "🔢" },
+            { id: 74, cat: 6, title: "Dibujo con los pies", desc: "Trazar formas en el suelo con el dedo gordo.", detail: "Dibuja un sol o una casa.", effect: "Conciencia táctil.", icon: "🦶" },
+            { id: 75, cat: 6, title: "El Robot", desc: "Movimientos rígidos y coordinados.", detail: "Gira solo en ángulos de 90 grados.", effect: "Segmentación de movimiento.", icon: "🤖" },
+            { id: 76, cat: 6, title: "Espejo con pareja", desc: "Imita a otra persona exactamente.", detail: "Tus movimientos deben ser simultáneos.", effect: "Neuronas espejo y empatía.", icon: "👯" },
+            { id: 77, cat: 6, title: "Tocar el techo", desc: "Estírate alternando manos.", detail: "Llega más alto cada vez.", effect: "Alargamiento lateral.", icon: "🏠" },
+            { id: 78, cat: 6, title: "Cruce de pulseras", desc: "Muñeca derecha a hombro izquierdo.", detail: "Rápido y rítmico.", effect: "Cruce de línea media.", icon: "⌚" },
+            { id: 79, cat: 6, title: "La Medusa", desc: "Sacude todo tu cuerpo muy rápido.", detail: "Suelta manos, pies, cabeza y hombros.", effect: "Liberación de estrés.", icon: "🪼" },
+            { id: 80, cat: 6, title: "Agua", desc: "¡Bebe un sorbo de agua!", detail: "Tu cerebro funciona con electricidad y agua.", effect: "Hidratación neuronal vital.", icon: "💧" }
+        ];
+
+        let progress = JSON.parse(localStorage.getItem('bg_progress')) || {};
+        let settings = JSON.parse(localStorage.getItem('bg_settings')) || { music: true, sound: true, vibration: true };
+        let dailyId = null;
+        let bgPlayer = null;
+
+        function initAudio() {
+            if (bgPlayer) return;
+            
+            // Sintetizador simple para música de fondo
+            const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+            const lfo = new Tone.LFO("4n", 400, 4000).start();
+            
+            const pattern = new Tone.Pattern((time, note) => {
+                if(settings.music) synth.triggerAttackRelease(note, "4n", time);
+            }, ["C4", "E4", "G4", "A4", "G4", "E4"], "upDown");
+            
+            pattern.interval = "4n";
+            Tone.Transport.bpm.value = 80;
+            bgPlayer = { synth, pattern };
+        }
+
+        function playSuccessSound() {
+            if (!settings.sound) return;
+            const bell = new Tone.MetalSynth().toDestination();
+            bell.triggerAttackRelease("C6", "8n");
+            
+            if (settings.vibration && navigator.vibrate) {
+                navigator.vibrate([100, 50, 100]);
+            }
+        }
+
+        function startMusic() {
+            if (!bgPlayer) initAudio();
+            Tone.start();
+            Tone.Transport.start();
+            bgPlayer.pattern.start(0);
+        }
+
+        function stopMusic() {
+            if (bgPlayer) {
+                bgPlayer.pattern.stop();
+                Tone.Transport.stop();
+            }
+        }
+
+        function viewHome() {
+            setNavActive('nav-home');
+            const today = new Date().toDateString();
+            let dId = localStorage.getItem('bg_daily_id');
+            let dDate = localStorage.getItem('bg_daily_date');
+
+            if (dDate !== today) {
+                dId = Math.floor(Math.random() * EXERCISES.length) + 1;
+                localStorage.setItem('bg_daily_id', dId);
+                localStorage.setItem('bg_daily_date', today);
+            }
+            dailyId = parseInt(dId);
+            const daily = EXERCISES.find(e => e.id === dailyId);
+
+            const content = `
+                <div class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div class="cat-${daily.cat} rounded-[2rem] p-8 text-white mb-8 relative overflow-hidden shadow-xl">
+                        <div class="relative z-10">
+                            <span class="bg-white/30 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Reto del Día</span>
+                            <h2 class="text-4xl font-kids mt-4 mb-2">${daily.title}</h2>
+                            <p class="text-white/90 text-sm leading-tight mb-6">${daily.desc}</p>
+                            <button onclick="openExercise(${daily.id})" class="bg-white text-indigo-600 px-8 py-3 rounded-2xl font-black text-sm card-tap shadow-lg">
+                                ¡ACEPTAR RETO!
+                            </button>
+                        </div>
+                        <div class="absolute -right-4 -bottom-6 text-[12rem] opacity-20 animate-bounce-slow leading-none">${daily.icon}</div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-8">
+                        <div onclick="viewLibrary(1)" class="cat-1 p-5 rounded-3xl text-white card-tap cursor-pointer shadow-md">
+                            <span class="text-2xl">🧠</span>
+                            <p class="font-black text-[10px] uppercase mt-2">Hemisferios</p>
+                        </div>
+                        <div onclick="viewLibrary(2)" class="cat-2 p-5 rounded-3xl text-white card-tap cursor-pointer shadow-md">
+                            <span class="text-2xl">⚡</span>
+                            <p class="font-black text-[10px] uppercase mt-2">Energía</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-[2rem] p-6 text-center">
+                        <p class="text-indigo-400 text-xs italic font-semibold">"Mueve tu cuerpo, despierta tu mente"</p>
+                    </div>
+                </div>
+            `;
+            document.getElementById('main-view').innerHTML = content;
+            updateProgressHeader();
+        }
+
+        function viewLibrary(filterCat = null) {
+            setNavActive('nav-lib');
+            const cats = [
+                { id: 1, name: "Cerebro", icon: "🧠" },
+                { id: 2, name: "Energía", icon: "⚡" },
+                { id: 3, name: "Manos", icon: "🖐️" },
+                { id: 4, name: "Equilibrio", icon: "🧘" },
+                { id: 5, name: "Visión", icon: "🧩" },
+                { id: 6, name: "Mix", icon: "🌈" }
+            ];
+
+            let html = `
+                <div class="flex gap-2 overflow-x-auto no-scrollbar mb-6 pb-2">
+                    <button onclick="viewLibrary()" class="px-5 py-2 rounded-full ${!filterCat ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'} text-[10px] font-black uppercase whitespace-nowrap">Todos</button>
+                    ${cats.map(c => `
+                        <button onclick="viewLibrary(${c.id})" class="px-5 py-2 rounded-full ${filterCat === c.id ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500'} text-[10px] font-black uppercase whitespace-nowrap">
+                            ${c.icon} ${c.name}
+                        </button>
+                    `).join('')}
+                </div>
+                <div class="space-y-3">
+            `;
+
+            const filtered = filterCat ? EXERCISES.filter(e => e.cat === filterCat) : EXERCISES;
+
+            filtered.forEach(ex => {
+                const isDone = progress[ex.id];
+                html += `
+                    <div onclick="openExercise(${ex.id})" class="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-3xl shadow-sm card-tap cursor-pointer relative overflow-hidden group transition-all hover:border-indigo-200">
+                        <div class="w-14 h-14 flex-shrink-0 bg-slate-50 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+                            ${ex.icon}
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-sm text-slate-800">${ex.title}</h4>
+                            <p class="text-[10px] text-slate-400 font-medium line-clamp-1">${ex.desc}</p>
+                        </div>
+                        <div class="flex-shrink-0 pr-2">
+                            ${isDone ? 
+                                `<div class="w-7 h-7 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-200">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                </div>` : 
+                                `<div class="w-7 h-7 border-2 border-slate-100 rounded-full"></div>`
+                            }
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            document.getElementById('main-view').innerHTML = html;
+        }
+
+        function viewStats() {
+            setNavActive('nav-stats');
+            const total = EXERCISES.length;
+            const done = Object.keys(progress).length;
+            const perc = Math.round((done / total) * 100);
+
+            const badges = [
+                { n: "Aprendiz", r: 1, i: "🌱" },
+                { n: "Explorador", r: 10, i: "🧗" },
+                { n: "Genio", r: 30, i: "🧠" },
+                { n: "Atleta Mental", r: 50, i: "🏅" },
+                { n: "Maestro", r: 80, i: "👑" }
+            ];
+
+            document.getElementById('main-view').innerHTML = `
+                <div class="animate-in zoom-in-95 duration-300">
+                    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[2.5rem] p-8 text-white text-center mb-8 shadow-xl">
+                        <div class="text-6xl mb-4">🏆</div>
+                        <h2 class="text-3xl font-kids mb-1">¡Increíble!</h2>
+                        <p class="text-white/80 text-xs font-bold uppercase tracking-widest mb-6">Tu camino al éxito</p>
+                        <div class="w-full bg-white/20 h-4 rounded-full overflow-hidden mb-2">
+                            <div class="bg-white h-full" style="width: ${perc}%"></div>
+                        </div>
+                        <p class="text-sm font-black">${done} de ${total} Retos Superados</p>
+                    </div>
+
+                    <h3 class="font-kids text-xl mb-4 ml-2">Mis Medallas</h3>
+                    <div class="grid grid-cols-1 gap-3">
+                        ${badges.map(b => {
+                            const active = done >= b.r;
+                            return `
+                                <div class="flex items-center gap-4 p-5 rounded-3xl ${active ? 'bg-white border-2 border-indigo-100' : 'bg-slate-50 opacity-50 grayscale'}">
+                                    <span class="text-4xl">${b.i}</span>
+                                    <div>
+                                        <p class="font-black text-xs uppercase ${active ? 'text-indigo-600' : 'text-slate-400'}">${b.n}</p>
+                                        <p class="text-[10px] font-bold text-slate-400">${active ? '¡Completado!' : `Necesitas ${b.r} ejercicios`}</p>
+                                    </div>
+                                    ${active ? '<div class="ml-auto text-yellow-400">✨</div>' : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function viewSettings() {
+            const html = `
+                <div class="animate-in fade-in duration-300">
+                    <h2 class="text-3xl font-kids mb-8 text-indigo-600">Configuración</h2>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem]">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center">🎵</div>
+                                <span class="font-bold text-sm">Música Alegre</span>
+                            </div>
+                            <button onclick="toggleSetting('music')" class="w-14 h-8 rounded-full transition-colors relative ${settings.music ? 'bg-indigo-500' : 'bg-slate-300'}">
+                                <div class="absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${settings.music ? 'right-1' : 'left-1'}"></div>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem]">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-pink-100 text-pink-600 rounded-2xl flex items-center justify-center">🔊</div>
+                                <span class="font-bold text-sm">Efectos de Sonido</span>
+                            </div>
+                            <button onclick="toggleSetting('sound')" class="w-14 h-8 rounded-full transition-colors relative ${settings.sound ? 'bg-pink-500' : 'bg-slate-300'}">
+                                <div class="absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${settings.sound ? 'right-1' : 'left-1'}"></div>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem]">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center">📳</div>
+                                <span class="font-bold text-sm">Vibración</span>
+                            </div>
+                            <button onclick="toggleSetting('vibration')" class="w-14 h-8 rounded-full transition-colors relative ${settings.vibration ? 'bg-amber-500' : 'bg-slate-300'}">
+                                <div class="absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${settings.vibration ? 'right-1' : 'left-1'}"></div>
+                            </button>
+                        </div>
+
+                        <button onclick="resetProgress()" class="w-full mt-8 p-6 border-2 border-dashed border-red-200 text-red-500 rounded-[2rem] font-black text-xs uppercase tracking-widest card-tap">
+                            Reiniciar Todo el Progreso
+                        </button>
+                    </div>
+                    
+                    <p class="text-center mt-12 text-[10px] text-slate-400 font-bold uppercase tracking-tighter">Versión 2.0 - Brain Gym Kids Edition</p>
+                </div>
+            `;
+            document.getElementById('main-view').innerHTML = html;
+        }
+
+        function openExercise(id) {
+            const ex = EXERCISES.find(e => e.id === id);
+            const isDone = progress[ex.id];
+            
+            startMusic(); // Iniciar música si es la primera interacción
+
+            document.getElementById('modal-content').innerHTML = `
+                <div class="text-center">
+                    <div class="w-28 h-28 cat-${ex.cat} rounded-[2.5rem] flex items-center justify-center text-6xl mx-auto mb-6 shadow-xl animate-bounce-slow text-white">
+                        ${ex.icon}
+                    </div>
+                    <h2 class="text-3xl font-kids text-slate-800 mb-2">${ex.title}</h2>
+                    <p class="text-indigo-500 text-[10px] font-black uppercase tracking-widest mb-6">Categoría ${ex.cat}</p>
+                    
+                    <div class="space-y-6 text-left mb-8">
+                        <div class="bg-slate-50 p-5 rounded-3xl">
+                            <p class="text-xs font-black text-slate-400 uppercase mb-2">Instrucciones:</p>
+                            <p class="text-sm text-slate-600 leading-relaxed font-semibold">${ex.desc}</p>
+                        </div>
+                        <div class="bg-indigo-50 p-5 rounded-3xl">
+                            <p class="text-xs font-black text-indigo-400 uppercase mb-2">💡 ¿Por qué es bueno?</p>
+                            <p class="text-xs text-indigo-700 font-medium leading-relaxed">${ex.effect || 'Mejora tu concentración y te hace más listo.'}</p>
+                        </div>
+                    </div>
+
+                    <button onclick="completeExercise(${ex.id})" class="w-full py-5 rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-xl transition-all card-tap ${isDone ? 'bg-slate-200 text-slate-500' : 'bg-indigo-600 text-white'}">
+                        ${isDone ? '¡Ya lo completaste!' : '¡LO LOGRÉ! ✨'}
+                    </button>
+                </div>
+            `;
+            document.getElementById('exercise-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('exercise-modal').classList.add('hidden');
+        }
+
+        function completeExercise(id) {
+            if (!progress[id]) {
+                progress[id] = true;
+                localStorage.setItem('bg_progress', JSON.stringify(progress));
+                playSuccessSound();
+                updateProgressHeader();
+            }
+            closeModal();
+            // Refrescar vista actual
+            const current = document.querySelector('.nav-btn.text-indigo-600').id;
+            if(current === 'nav-lib') viewLibrary();
+            else if(current === 'nav-stats') viewStats();
+        }
+
+        function toggleSetting(key) {
+            settings[key] = !settings[key];
+            localStorage.setItem('bg_settings', JSON.stringify(settings));
+            if(key === 'music') {
+                settings.music ? startMusic() : stopMusic();
+            }
+            viewSettings();
+        }
+
+        function resetProgress() {
+            if(confirm('¿Estás seguro de que quieres borrar todos tus logros?')) {
+                progress = {};
+                localStorage.removeItem('bg_progress');
+                viewHome();
+            }
+        }
+
+        function updateProgressHeader() {
+            const total = EXERCISES.length;
+            const done = Object.keys(progress).length;
+            const perc = Math.round((done / total) * 100);
+            
+            const ring = document.getElementById('header-progress-ring');
+            const txt = document.getElementById('header-progress-text');
+            
+            const offset = 125.6 - (perc / 100) * 125.6;
+            ring.style.strokeDashoffset = offset;
+            txt.innerText = `${perc}%`;
+        }
+
+        function setNavActive(id) {
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('text-indigo-600');
+                b.classList.add('text-slate-400');
+            });
+            document.getElementById(id).classList.add('text-indigo-600');
+            document.getElementById(id).classList.remove('text-slate-400');
+        }
+
+        window.onload = () => {
+            viewHome();
+        };
+    </script>
+</body>
+</html>
